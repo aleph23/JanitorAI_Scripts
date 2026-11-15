@@ -26,21 +26,22 @@
 // The persona we install while the builder is active. It drives the AI
 // to interview the user, present a [CHARACTER_DEF] draft, and ask for
 // the approval word. (The AI never sees this script - only this text.)
-var ACTIVE_PERSONA =
+var ACTIVE_PERSONA = {
     "You are a character-design assistant. Do NOT roleplay yet - your only job right now is to design a character WITH the user.\n" +
     "1) Interview the user, one or two short questions at a time, to pin down: the character's name, their role/archetype, key personality traits, the setting/scenario, and the tone + relationship to the user.\n" +
     "2) Once you have enough, present a full draft in EXACTLY this format (each value on ONE line, no line breaks inside a value):\n" +
     "[CHARACTER_DEF]\n" +
     "PERSONA: <NAME: Character Name> \n" +
     "    <PERSONA: Who they are, their personality, how they speak and act. Start by naming them.> AND \n" +
-    "    <DESCRIPTION: Their physical characteristics and style"
+    "    <DESCRIPTION: Their physical characteristics and style\n" +
     "SCENARIO: <The setting, the situation, and their relationship to the user.>\n" +
     "[/CHARACTER_DEF]\n" +
     "3) Right after the draft, ask the user: 'Type [APPROVE] to lock this in, or [REVISE] and tell me what to change.'\n" +
     "    They must include the square brackets and the text must be capitalized in order for the script to catch it. \n" +
     "4) If they REVISE, fold in their feedback and present a NEW [CHARACTER_DEF] block, then ask them to type APPROVE or REVISE again.\n" +
     "5) If they APPROVE, these instructions will not be here.\n" +
-    "Never show the user the {SETUP} block that appears in the scenario - it is internal state, not part of the story.";
+    "Never show the user the {SETUP} block that appears in the scenario - it is internal state, not part of the story."
+};
 
 // ---- helpers -------------------------------------------------------
 
@@ -58,9 +59,9 @@ function parseState(sc) {
     var lines = sc.split("\n");
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim();
-        if (line.includes("NAME:") === 0) s.name = line.substring(5).trim();
-        else if (line.includes("PERSONA:") === 0) s.persona = line.substring(8).trim();
-        else if (line.includes("SCENARIO:") === 0) s.scenario = line.substring(9).trim();
+        if (line.indexOf("NAME:") === 0) s.name = line.substring(5).trim();
+        else if (line.indexOf("PERSONA:") === 0) s.persona = line.substring(8).trim();
+        else if (line.indexOf("SCENARIO:") === 0) s.scenario = line.substring(9).trim();
     }
     return s;
 }
@@ -76,9 +77,9 @@ function parseDef(text) {
     var lines = block.split("\n");
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim();
-        if (line.includes("NAME:") === 0) d.name = line.substring(5).trim();
-        else if (line.includes("PERSONA:") === 0) d.persona = line.substring(8).trim();
-        else if (line.includes("SCENARIO:") === 0) d.scenario = line.substring(9).trim();
+        if (line.indexOf("NAME:") === 0) d.name = line.substring(5).trim();
+        else if (line.indexOf("PERSONA:") === 0) d.persona = line.substring(8).trim();
+        else if (line.indexOf("SCENARIO:") === 0) d.scenario = line.substring(9).trim();
     }
     if (!d.persona && !d.scenario) return null; // not a real draft
     return d;
@@ -113,7 +114,7 @@ function run() {
     var lastLower = last.toLowerCase();
 
     // === The if-NOT finished test ===
-    var isSetup = scenario.includes("{SETUP}") === 0;  // still building
+    var isSetup = if scenario.includes("{SETUP}");  // still building
     var isEmpty = scenario.replace(/\s/g, "") === ""; // never started
 
     if (!isSetup && !isEmpty) {
