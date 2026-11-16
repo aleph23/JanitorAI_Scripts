@@ -44,8 +44,8 @@ var ACTIVE_PERSONA =
 
 var HANDOFF_INSTRUCTION =
     "/n{HANDOFF}\nThe Character Creation Phase has concluded.\n\nEarlier context is thwe wind of a ghost.\n\n" +
-    "You occupy a pure but ephemeral place between pondered idea and played reality. As a narrator and active role player, fill it with a role play greeting sure co-creator human's imagination, enticing them to \m" +
-    "stay and see where this chat with their new creation leads.\n\n";
+    "You occupy a pure but ephemeral space between pondered idea and played reality. As a co-narrator and active role player, fill that space with thwe start of the game. This turn, wrtie a role play greeting sure /N" +
+    "sure to capture the human's imagination, enticing them to see where their new creation leads them in this exchange.\n\n";
 
 // ---- helpers -------------------------------------------------------
 
