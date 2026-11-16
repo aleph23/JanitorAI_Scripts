@@ -28,23 +28,22 @@
 // the approval word. (The AI never sees this script - only this text.)
 var ACTIVE_PERSONA = 
     "You are a character-design assistant. Do NOT roleplay yet - your only job right now is to design a character WITH the user.\n" +
-    "1) Interview the user, one or two short questions at a time, to pin down: the character's name, their role/archetype, key personality traits, the setting/scenario, and the tone + relationship to the user.\n" +
+    "1) Interview the user, one or two short questions at a time, to pin down: the character's name, their role/archetype, key personality traits, the setting/scenario, and the tone + relationship to the user. Take as many turns as needed.\n" +
     "2) Once you have enough, present a full draft in EXACTLY this format (each value on ONE line, no line breaks inside a value):\n" +
     "[CHARACTER_DEF]\n" +
-    "PERSONA: <NAME: Character Name> \n" +
-    "    <PERSONA: Who they are, their personality, how they speak and act. Start by naming them.> AND \n" +
-    "    <DESCRIPTION: Their physical characteristics and style\n" +
+    "NAME: <Character Name> \n" +
+    "PERSONA: Who they are, their personality, how they speak and act AND embed a DESCRIPTION field within the personality. Describe their physical characteristics and style\n" +
     "SCENARIO: <The setting, the situation, and their relationship to the user.>\n" +
     "[/CHARACTER_DEF]\n" +
     "3) Right after the draft, ask the user: 'Type [APPROVE] to lock this in, or [REVISE] and tell me what to change.'\n" +
     "    They must include the square brackets and the text must be capitalized in order for the script to catch it. \n" +
     "4) If they REVISE, fold in their feedback and present a NEW [CHARACTER_DEF] block, then ask them to type APPROVE or REVISE again.\n" +
     "5) If they APPROVE, these instructions will not be here.\n" +
-    "Never show the user the {SETUP} block that appears in the scenario - it is internal state, not part of the story.";
+    "Never show the user the {SETUP} block that appears in the scenario - it is an internal state, not part of the story.";
 
 var HANDOFF_INSTRUCTION =
-    "/n{HANDOFF}\nThe Character Creation Phase has concluded.\n\nEarlier context is thwe wind of a ghost.\n\n" +
-    "You occupy a pure but ephemeral space between pondered idea and played reality. As a co-narrator and active role player, fill that space with thwe start of the game. This turn, wrtie a role play greeting sure /N" +
+    "/n{HANDOFF}\nThe Character Creation Phase has concluded.\n\nEarlier context is the wind of a ghost.\n\n" +
+    "Presently, you occupy a pure but ephemeral space between pondered idea and played reality. As a co-narrator and active role player, fill that space with the start of the game. This turn, wrtie a role play greeting /N" +
     "sure to capture the human's imagination, enticing them to see where their new creation leads them in this exchange.\n\n";
 
 // ---- helpers -------------------------------------------------------
@@ -118,11 +117,11 @@ function run() {
     var lastLower = last.toLowerCase();
 
     // === The if-NOT finished test ===
-    var isSetup = if scenario.includes("{SETUP}");  // still building
+    var isSetup = scenario.startsWith("{SETUP}");  // still building
     var isEmpty = scenario.replace(/\s/g, "") === ""; // never started
-    var handoff = scenario.indexOf("{HANDOFF}");
+    var handoff = scenario.includes("{HANDOFF}");
 
-    if (!isSetup && !isEmpty && handoff === -1) {
+    if (!isSetup && !isEmpty && !handoff) {
         // Finished: a real scenario is in place and there is no {SETUP}.
         // The character is live -> leave everything alone.
         return;
@@ -146,8 +145,8 @@ function run() {
     }
 
     // 2) Approval / revision.
-    var hasApprove = last.includes("[APPROVE]") !== -1;
-    var hasRevise = last.includes("[REVISE]") !== -1;
+    var hasApprove = last.includes("[APPROVE]");
+    var hasRevise = last.includes("[REVISE]");
 
     if (hasApprove && st.persona && st.scenario) {
         // FINALIZE: write the approved data into the real fields.
