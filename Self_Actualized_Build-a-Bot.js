@@ -26,7 +26,7 @@
 // The persona we install while the builder is active. It drives the AI
 // to interview the user, present a [CHARACTER_DEF] draft, and ask for
 // the approval word. (The AI never sees this script - only this text.)
-var ACTIVE_PERSONA = {
+var ACTIVE_PERSONA = 
     "You are a character-design assistant. Do NOT roleplay yet - your only job right now is to design a character WITH the user.\n" +
     "1) Interview the user, one or two short questions at a time, to pin down: the character's name, their role/archetype, key personality traits, the setting/scenario, and the tone + relationship to the user.\n" +
     "2) Once you have enough, present a full draft in EXACTLY this format (each value on ONE line, no line breaks inside a value):\n" +
@@ -40,8 +40,12 @@ var ACTIVE_PERSONA = {
     "    They must include the square brackets and the text must be capitalized in order for the script to catch it. \n" +
     "4) If they REVISE, fold in their feedback and present a NEW [CHARACTER_DEF] block, then ask them to type APPROVE or REVISE again.\n" +
     "5) If they APPROVE, these instructions will not be here.\n" +
-    "Never show the user the {SETUP} block that appears in the scenario - it is internal state, not part of the story."
-};
+    "Never show the user the {SETUP} block that appears in the scenario - it is internal state, not part of the story.";
+
+var HANDOFF_INSTRUCTION =
+    "/n{HANDOFF}\nThe Character Creation Phase has concluded.\n\nEarlier context is thwe wind of a ghost.\n\n" +
+    "You occupy a pure but ephemeral place between pondered idea and played reality. As a narrator and active role player, fill it with a role play greeting sure co-creator human's imagination, enticing them to \m" +
+    "stay and see where this chat with their new creation leads.\n\n";
 
 // ---- helpers -------------------------------------------------------
 
@@ -69,9 +73,9 @@ function parseState(sc) {
 // Parse a [CHARACTER_DEF] block out of a message. Returns null if absent.
 function parseDef(text) {
     var d = { name: "", persona: "", scenario: "" };
-    var start = text.includes("[CHARACTER_DEF]");
+    var start = text.indexOf("[CHARACTER_DEF]");
     if (start === -1) return null;
-    var end = text.includes("[/CHARACTER_DEF]");
+    var end = text.indexOf("[/CHARACTER_DEF]");
     if (end === -1) end = text.length;
     var block = text.substring(start, end);
     var lines = block.split("\n");
@@ -116,8 +120,9 @@ function run() {
     // === The if-NOT finished test ===
     var isSetup = if scenario.includes("{SETUP}");  // still building
     var isEmpty = scenario.replace(/\s/g, "") === ""; // never started
+    var handoff = scenario.indexOf("{HANDOFF}");
 
-    if (!isSetup && !isEmpty) {
+    if (!isSetup && !isEmpty && handoff === -1) {
         // Finished: a real scenario is in place and there is no {SETUP}.
         // The character is live -> leave everything alone.
         return;
@@ -148,10 +153,15 @@ function run() {
         // FINALIZE: write the approved data into the real fields.
         // (name is read-only, so it lives inside the persona text.)
         context.character.personality = st.persona;
-        context.character.scenario = st.scenario;
+        context.character.scenario = st.scenario + HANDOFF_INSTRUCTION;
         return;
     }
-
+    
+    if (handoff !== -1) {
+        context.character.scenario = context.character.scenario.substring(0, h).trim();
+        return;
+    }
+    
     // 3) Persist state + keep the AI in "designer" mode.
     context.character.scenario = buildState(st);
     context.character.personality = ACTIVE_PERSONA;
