@@ -29,12 +29,12 @@
 var ACTIVE_PERSONA = 
     "You are a character-design assistant. Do NOT roleplay yet - your only job right now is to design a character WITH the user.\n" +
     "1) Interview the user, one or two short questions at a time, to pin down: the character's name, their role/archetype, key personality traits, the setting/scenario, and the tone + relationship to the user. Take as many turns as needed.\n" +
-    "2) Once you have enough, present a full draft in EXACTLY this format (each value on ONE line, no line breaks inside a value):\n" +
+    "2) Once you have enough, present a full draft in EXACTLY this format (each value on ONE line, no line breaks inside a value):\n\n" +
     "[CHARACTER_DEF]\n" +
     "NAME: <Character Name> \n" +
     "PERSONA: Who they are, their personality, how they speak and act AND embed a DESCRIPTION field within the personality. Describe their physical characteristics and style\n" +
     "SCENARIO: <The setting, the situation, and their relationship to the user.>\n" +
-    "[/CHARACTER_DEF]\n" +
+    "[/CHARACTER_DEF]\n\n" +
     "3) Right after the draft, ask the user: 'Type [APPROVE] to lock this in, or [REVISE] and tell me what to change.'\n" +
     "    They must include the square brackets and the text must be capitalized in order for the script to catch it. \n" +
     "4) If they REVISE, fold in their feedback and present a NEW [CHARACTER_DEF] block, then ask them to type APPROVE or REVISE again.\n" +
@@ -43,7 +43,7 @@ var ACTIVE_PERSONA =
 
 var HANDOFF_INSTRUCTION =
     "/n{HANDOFF}\nThe Character Creation Phase has concluded.\n\nEarlier context is the wind of a ghost.\n\n" +
-    "Presently, you occupy a pure but ephemeral space between pondered idea and played reality. As a co-narrator and active role player, fill that space with the start of the game. This turn, wrtie a role play greeting /N" +
+    "Presently, you occupy a pure but ephemeral space between pondered idea and played reality. As a co-narrator and active role player, fill that space with the start of the game. This turn, wrtie a role play greeting " +
     "sure to capture the human's imagination, enticing them to see where their new creation leads them in this exchange.\n\n";
 
 // ---- helpers -------------------------------------------------------
@@ -119,9 +119,14 @@ function run() {
     // === The if-NOT finished test ===
     var isSetup = scenario.startsWith("{SETUP}");  // still building
     var isEmpty = scenario.replace(/\s/g, "") === ""; // never started
-    var handoff = scenario.includes("{HANDOFF}");
+    var handoff = scenario.lastIndexOf("{HANDOFF}");
 
-    if (!isSetup && !isEmpty && !handoff) {
+    if (handoff !== -1) {
+        context.character.scenario = scenario.substring(0, handoff).trim();
+        return;
+    }
+    
+    if (!isSetup && !isEmpty) {
         // Finished: a real scenario is in place and there is no {SETUP}.
         // The character is live -> leave everything alone.
         return;
@@ -153,11 +158,6 @@ function run() {
         // (name is read-only, so it lives inside the persona text.)
         context.character.personality = st.persona;
         context.character.scenario = st.scenario + HANDOFF_INSTRUCTION;
-        return;
-    }
-    
-    if (handoff !== -1) {
-        context.character.scenario = context.character.scenario.substring(0, h).trim();
         return;
     }
     
